@@ -32,6 +32,30 @@ Todo:
 import struct
 import re
 import optparse
+import binascii
+
+# backported from oledump.py
+
+# CIC: Call If Callable
+def CIC(expression):
+    if callable(expression):
+        return expression()
+    else:
+        return expression
+
+# IFF: IF Function
+def IFF(expression, valueTrue, valueFalse):
+    if expression:
+        return CIC(valueTrue)
+    else:
+        return CIC(valueFalse)
+
+def P23Ord(value):
+    if type(value) == int:
+        return value
+    else:
+        return ord(value)
+
 
 def CombineHexASCII(hexDump, asciiDump, length):
     if hexDump == '':
