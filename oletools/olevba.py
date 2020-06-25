@@ -281,6 +281,7 @@ import argparse
 import binascii
 import base64
 import zlib
+import chardet
 import email  # for MHTML parsing
 import email.feedparser
 import string  # for printable
