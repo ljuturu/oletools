@@ -275,6 +275,7 @@ import optparse
 import binascii
 import base64
 import zlib
+import chardet
 import email  # for MHTML parsing
 import string  # for printable
 import json   # for json output mode (argument --json)
@@ -3357,6 +3358,8 @@ class VBA_Parser(object):
                         try:
                             vba_code = decompress_stream(bytearray(compressed_code))
                             # TODO vba_code = self.encode_string(vba_code)
+                            encoding = chardet.detect(vba_code)['encoding'] or 'utf-8'
+                            vba_code = bytes2str(vba_code, encoding)
                             yield (self.filename, d.name, d.name, vba_code)
                         except Exception as exc:
                             # display the exception with full stack trace for debugging
