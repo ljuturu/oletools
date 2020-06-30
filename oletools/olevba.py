@@ -3573,8 +3573,8 @@ class VBA_Parser(object):
         :return: VBA P-code disassembly
         :rtype: str
         """
-        # Only run on OLE files
-        if self.type != TYPE_OLE:
+        # Text and SLK files cannot be stomped:
+        if self.type in (TYPE_SLK, TYPE_TEXT):
             self.pcodedmp_output = ''
             return ''
         # only run it once:
@@ -3635,8 +3635,12 @@ class VBA_Parser(object):
         :return: True if VBA stomping detected, False otherwise
         :rtype: bool
         """
-        # Only run on OLE files
-        if self.type != TYPE_OLE:
+        log.debug('detect_vba_stomping')
+        # only run it once:
+        if self.vba_stomping_detected is not None:
+            return self.vba_stomping_detected
+        # Text and SLK files cannot be stomped:
+        if self.type in (TYPE_SLK, TYPE_TEXT):
             self.vba_stomping_detected = False
             return False
         # only run it once:
