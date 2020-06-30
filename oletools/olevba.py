@@ -3815,11 +3815,6 @@ class VBA_Parser(object):
         if self.type in (TYPE_SLK, TYPE_TEXT):
             self.vba_stomping_detected = False
             return False
-        # TODO: Files in memory cannot be analysed with pcodedmp yet
-        if not self.file_on_disk:
-            log.warning('For now, VBA stomping cannot be detected for files in memory')
-            self.vba_stomping_detected = False
-            return False
         # only run it once:
         if self.vba_stomping_detected is None:
             log.debug('Analysing the P-code to detect VBA stomping')
