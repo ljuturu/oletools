@@ -870,6 +870,7 @@ re_url = re.compile(URL_RE)
 
 EXCLUDE_URLS_PATTERNS = ["http://schemas.openxmlformats.org/",
                          "http://schemas.microsoft.com/",
+                         "https://docs.microsoft.com/",
                          ]
 
 # Patterns to be extracted (IP addresses, URLs, etc)
@@ -3481,7 +3482,7 @@ class VBA_Parser(object):
                 vba_code = ''
                 for line in self.xlm_macros:
                     vba_code += "' " + line + '\n'
-                yield ('xlm_macro', 'xlm_macro', 'xlm_macro.txt', vba_code)
+                yield ('xlm_macro', 'xlm_macro', 'xlm_macro.vba', vba_code)
             # Analyse the VBA P-code to detect VBA stomping:
             # If stomping is detected, add a fake VBA module with the P-code as source comments
             # so that VBA_Scanner can find keywords and IOCs in it
