@@ -11,9 +11,13 @@ ftguess is part of the python-oletools package:
 http://www.decalage.info/python/oletools
 """
 
+# Useful resources about file formats:
+# http://fileformats.archiveteam.org
+# https://www.nationalarchives.gov.uk/PRONOM/Default.aspx
+
 #=== LICENSE =================================================================
 
-# ftguess is copyright (c) 2018-2022, Philippe Lagadec (http://www.decalage.info)
+# ftguess is copyright (c) 2018-2024, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -43,7 +47,7 @@ from __future__ import print_function
 # 2018-07-04 v0.54 PL: - first version
 # 2021-05-09 v0.60 PL: -
 
-__version__ = '0.60.1.dev8'
+__version__ = '0.60.2'
 
 # ------------------------------------------------------------------------------
 # TODO:
@@ -184,6 +188,9 @@ class FTYPE(object):
     GENERIC_XML = 'XML' # Generic XML file
     GENERIC_OPENXML = 'OpenXML' # Generic OpenXML file
     UNKNOWN = 'Unknown File Type'
+    MSI = "MSI"
+    ONENOTE = "OneNote"
+    PNG = 'PNG'
 
 class CONTAINER(object):
     """
@@ -198,6 +205,8 @@ class CONTAINER(object):
     MIME = 'MIME'
     BINARY = 'Binary'  # Generic binary file without container
     UNKNOWN = 'Unknown Container'
+    ONENOTE = 'OneNote'
+    PNG = 'PNG'
 
 class APP(object):
     """
@@ -210,6 +219,7 @@ class APP(object):
     MSVISIO = 'MS Visio'
     MSPROJECT = 'MS Project'
     MSOFFICE = 'MS Office'  # when the exact app is unknown
+    MSONENOTE = 'MS OneNote'
     ZIP_ARCHIVER = 'Any Zip Archiver'
     WINDOWS = 'Windows'  # for Windows executables and XPS
     UNKNOWN = 'Unknown Application'
@@ -633,26 +643,30 @@ class FType_Powerpoint2007(FType_Powerpoint, FType_Generic_OpenXML):
 
 class FType_Powerpoint2007_Presentation(FType_Powerpoint2007):
     filetype = FTYPE.POWERPOINT2007_PPTX
-    name = 'MSPointpoint 2007+ Presentation'
-    longname = 'MSPointpoint 2007+ Presentation (.pptx)'
+    name = 'MSPowerpoint 2007+ Presentation'
+    longname = 'MSPowerpoint 2007+ Presentation (.pptx)'
+    content_types = ('application/vnd.openxmlformats-officedocument.presentationml.presentation',)
     extensions = ['pptx']
 
 class FType_Powerpoint2007_Slideshow(FType_Powerpoint2007):
     filetype = FTYPE.POWERPOINT2007_PPSX
-    name = 'MSPointpoint 2007+ Slideshow'
-    longname = 'MSPointpoint 2007+ Slideshow (.ppsx)'
+    name = 'MSPowerpoint 2007+ Slideshow'
+    longname = 'MSPowerpoint 2007+ Slideshow (.ppsx)'
+    content_types = ('application/vnd.openxmlformats-officedocument.presentationml.slideshow',)
     extensions = ['ppsx']
 
 class FType_Powerpoint2007_Macro(FType_Powerpoint2007):
     filetype = FTYPE.POWERPOINT2007_PPTM
-    name = 'MSPointpoint 2007+ Macro-Enabled Presentation'
-    longname = 'MSPointpoint 2007+ Macro-Enabled Presentation (.pptm)'
+    name = 'MSPowerpoint 2007+ Macro-Enabled Presentation'
+    longname = 'MSPowerpoint 2007+ Macro-Enabled Presentation (.pptm)'
+    content_types = ('application/vnd.ms-powerpoint.presentation.macroEnabled.12',)
     extensions = ['pptm']
 
 class FType_Powerpoint2007_Slideshow_Macro(FType_Powerpoint2007):
     filetype = FTYPE.POWERPOINT2007_PPSM
-    name = 'MSPointpoint 2007+ Macro-Enabled Slideshow'
-    longname = 'MSPointpoint 2007+ Macro-Enabled Slideshow (.ppsm)'
+    name = 'MSPowerpoint 2007+ Macro-Enabled Slideshow'
+    longname = 'MSPowerpoint 2007+ Macro-Enabled Slideshow (.ppsm)'
+    content_types = ('application/vnd.ms-powerpoint.slideshow.macroEnabled.12',)
     extensions = ['ppsm']
 
 
@@ -662,6 +676,51 @@ class FType_XPS(FType_Generic_OpenXML):
     name = 'XPS'
     longname = 'Fixed-Page Document (.xps)',
     extensions = ['xps']
+
+
+class FType_MSI(FType_Generic_OLE):
+    # see http://fileformats.archiveteam.org/wiki/Windows_Installer
+    application = APP.WINDOWS
+    filetype = FTYPE.MSI
+    name = 'MSI'
+    longname = 'Windows Installer Package (.msi)'
+    extensions = ['msi']
+
+
+class FType_OneNote(FType_Base):
+    container = CONTAINER.ONENOTE
+    application = APP.MSONENOTE
+    filetype = FTYPE.ONENOTE
+    name = 'OneNote'
+    longname = 'MS OneNote Revision Store (.one)'
+    extensions = ['one']
+    content_types = ('application/msonenote',)
+    PUID = 'fmt/637'
+    # ref: https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-onestore/ae670cd2-4b38-4b24-82d1-87cfb2cc3725
+    # PRONOM: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatSearch.aspx?status=detailReport&id=1437
+
+    @classmethod
+    def recognize(cls, ftg):
+        # ref about Header with OneNote GUID:
+        # https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-onestore/2b394c6b-8788-441f-b631-da1583d772fd
+        return True if ftg.data.startswith(b'\xE4\x52\x5C\x7B\x8C\xD8\xA7\x4D\xAE\xB1\x53\x78\xD0\x29\x96\xD3') else False
+
+
+class FType_PNG(FType_Base):
+    container = CONTAINER.PNG
+    application = APP.UNKNOWN
+    filetype = FTYPE.PNG
+    name = 'PNG'
+    longname = 'Portable Network Graphics picture (.png)'
+    extensions = ['png']
+    content_types = ('image/png',)
+    PUID = 'fmt/13' # This is for PNG 1.2. PNG 1.1 is fmt/12, 1.0 is fmt/11
+    # ref: http://fileformats.archiveteam.org/wiki/PNG
+    # PRONOM: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatSearch.aspx?status=detailReport&id=666
+
+    @classmethod
+    def recognize(cls, ftg):
+        return True if ftg.data.startswith(b'\x89\x50\x4E\x47\x0D\x0A\x1A\x0A') else False
 
 
 # TODO: for PPT, check for stream 'PowerPoint Document'
@@ -678,6 +737,8 @@ clsid_ftypes = {
     '00020810-0000-0000-C000-000000000046': FType_Excel5,
     # POWERPOINT
     '64818D10-4F9B-11CF-86EA-00AA00B929E8': FType_Powerpoint97,
+    # MSI
+    '000C1084-0000-0000-C000-000000000046': FType_MSI,
 }
 
 openxml_ftypes = {
@@ -695,12 +756,19 @@ openxml_ftypes = {
     'application/vnd.ms-excel.template.macroEnabled.main+xml': FType_Excel2007_Template_Macro,
     'application/vnd.ms-excel.addin.macroEnabled.main+xml': FType_Excel2007_Addin_Macro,
     # POWERPOINT
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml': FType_Powerpoint2007_Presentation,
-    'application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml': FType_Powerpoint2007_Slideshow,
-    'application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml': FType_Powerpoint2007_Macro,
-    'application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml': FType_Powerpoint2007_Slideshow_Macro,
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml': FType_Powerpoint2007_Presentation, #PPTX
+    'application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml': FType_Powerpoint2007_Slideshow, #PPSX
+    'application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml': FType_Powerpoint2007_Macro, #PPTM
+    'application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml': FType_Powerpoint2007_Slideshow_Macro, #PPSM
+
+    # TODO: add missing PowerPoint formats:
+    # PPAM – PowerPoint Add-in Open Office XML File Format. Mime type is application/vnd.ms-powerpoint.addin.macroEnabled.12.
+    # POTX – PowerPoint Template Open Office XML File Format. Mime type is application/vnd.openxmlformats-officedocument.presentationml.template.
+    # POTM – PowerPoint Macro-Enabled Template Open Office XML File Format. Mime type is application/vnd.ms-powerpoint.template.macroEnabled.12.
+
     # XPS
     'application/vnd.ms-package.xps-fixeddocumentsequence+xml': FType_XPS,
+    #TODO: Add MSIX
 }
 
 
@@ -754,7 +822,7 @@ class FileTypeGuesser(object):
         self.data_bytesio = io.BytesIO(self.data)
 
         # Identify the main container type:
-        for ftype in (FType_RTF, FType_Generic_OLE, FType_Generic_Zip):
+        for ftype in (FType_RTF, FType_Generic_OLE, FType_Generic_Zip, FType_OneNote, FType_PNG):
             if ftype.recognize(self):
                 self.ftype = ftype
                 break

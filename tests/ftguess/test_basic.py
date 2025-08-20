@@ -1,8 +1,7 @@
 """Test ftguess"""
-
 import unittest
 import os
-from os.path import splitext
+from os.path import splitext, join
 from oletools import ftguess
 
 # Directory with test data, independent of current working directory
@@ -22,7 +21,7 @@ class TestFTGuess(unittest.TestCase):
             ftguess.FType_Word2007, ftguess.FType_Word2007_Macro,
             ftguess.FType_Word2007_Template,
             ftguess.FType_Word2007_Template_Macro, ftguess.FType_Excel97,
-            ftguess.FType_Excel2007,
+            ftguess.FType_Excel2007, ftguess.FType_Excel2007_XLSB,
             ftguess.FType_Excel2007_XLSX , ftguess.FType_Excel2007_XLSM ,
             ftguess.FType_Excel2007_Template,
             ftguess.FType_Excel2007_Template_Macro,
@@ -38,9 +37,6 @@ class TestFTGuess(unittest.TestCase):
             for extension in ftype.extensions:
                 ftype_for_extension[extension] = ftype
 
-        # TODO: xlsb is not implemented yet
-        ftype_for_extension['xlsb'] = ftguess.FType_Generic_OpenXML
-
         for filename, file_contents in loop_over_files():
             # let the system guess
             guess = ftguess.ftype_guess(data=file_contents)
@@ -50,15 +46,15 @@ class TestFTGuess(unittest.TestCase):
             before_dot, extension = splitext(filename)
             if extension == '.zip':
                 extension = splitext(before_dot)[1]
-            elif filename in ('basic/empty', 'basic/text'):
+            elif filename in (join('basic', 'empty'), join('basic', 'text')):
                 extension = '.csv'    # have just like that
             elif not extension:
                 self.fail('Could not find extension for test sample {0}'
                           .format(filename))
             extension = extension[1:]      # remove the leading '.'
 
-            # encrypted files are mostly recognized (yet?), except .xls
-            if filename.startswith('encrypted/'):
+            # encrypted files are mostly not recognized (yet?), except .xls
+            if filename.startswith('encrypted' + os.sep):
                 if extension == 'xls':
                     expect = ftguess.FType_Excel97
                 else:
@@ -68,8 +64,17 @@ class TestFTGuess(unittest.TestCase):
                 # not really an office file type
                 expect = ftguess.FType_Unknown
 
-            elif filename == 'basic/encrypted.docx':
+            elif extension == 'slk':
+                # not implemented yet
+                expect = ftguess.FType_Unknown
+
+            elif filename == join('basic', 'encrypted.docx'):
                 expect = ftguess.FType_Generic_OLE
+
+            elif 'excel5' in filename:
+                # excel5 and excel97 have the same extensions, so we did not
+                # include excel5 in "used_types" above.
+                expect = ftguess.FType_Excel5
 
             else:
                 # other files behave nicely, so extension determines the type
@@ -94,9 +99,7 @@ class TestFTGuess(unittest.TestCase):
             if expect not in (ftguess.FType_Generic_OLE, ftguess.FType_Unknown):
                 self.assertEqual(guess.is_excel(), extension.startswith('x')
                                                    and extension != 'xml'
-                                                   and extension != 'xlsb'
                                                    and extension != 'xps')
-                   # xlsb is excel but not handled properly yet
                 self.assertEqual(guess.is_word(), extension.startswith('d'))
                 self.assertEqual(guess.is_powerpoint(),
                                  extension.startswith('p'))

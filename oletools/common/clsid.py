@@ -12,7 +12,7 @@ http://www.decalage.info/python/oletools
 
 #=== LICENSE ==================================================================
 
-# oletools are copyright (c) 2018-2021 Philippe Lagadec (http://www.decalage.info)
+# oletools are copyright (c) 2018-2023 Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -43,7 +43,7 @@ http://www.decalage.info/python/oletools
 # 2018-04-18       PL: - added known-bad CLSIDs from Cuckoo sandbox (issue #290)
 # 2018-05-08       PL: - added more CLSIDs (issues #299, #304), merged and sorted
 
-__version__ = '0.60.1.dev1'
+__version__ = '0.60.2.dev2'
 
 
 # REFERENCES:
@@ -68,6 +68,7 @@ KNOWN_CLSIDS = {
     '00000309-0000-0000-C000-000000000046': 'Composite Moniker (may trigger CVE-2017-8570)',
     '0000031A-0000-0000-C000-000000000046': 'Class Moniker',
     '00000535-0000-0010-8000-00AA006D2EA4': 'ADODB.RecordSet (may trigger CVE-2015-0097)',
+    '00000FE0-8804-4CA8-8868-36F59DEFD14D': 'ZED! encrypted container',
     '0002034C-0000-0000-C000-000000000046': 'OutlookAttachMoniker',
     '0002034E-0000-0000-C000-000000000046': 'OutlookMessageMoniker',
     '00020810-0000-0000-C000-000000000046': 'Microsoft Excel.Sheet.5',
@@ -88,11 +89,16 @@ KNOWN_CLSIDS = {
     '00022603-0000-0000-C000-000000000046': 'OLE Package Object (may contain and run any file)',
     '0002CE02-0000-0000-C000-000000000046': 'Microsoft Equation 3.0 (Known Related to CVE-2017-11882 or CVE-2018-0802)',
     '0002CE03-0000-0000-C000-000000000046': 'MathType Equation Object',
+    '0003000A-0000-0000-C000-000000000046': 'Bitmap Image',
     '0003000B-0000-0000-C000-000000000046': 'Microsoft Equation (Known Related to CVE-2017-11882 or CVE-2018-0802)',
     '0003000C-0000-0000-C000-000000000046': 'OLE Package Object (may contain and run any file)',
     '0003000D-0000-0000-C000-000000000046': 'OLE Package Object (may contain and run any file)',
     '0003000E-0000-0000-C000-000000000046': 'OLE Package Object (may contain and run any file)',
     '0004A6B0-0000-0000-C000-000000000046': 'Microsoft Equation 2.0 (Known Related to CVE-2017-11882 or CVE-2018-0802)', # TODO: to be confirmed
+    # Referenced in https://devblogs.microsoft.com/setup/identifying-windows-installer-file-types/ :
+    '000C1082-0000-0000-C000-000000000046': 'MSI Transform (mst)',
+    '000C1084-0000-0000-C000-000000000046': 'MSI Windows Installer Package (msi)',
+    '000C1086-0000-0000-C000-000000000046': 'MSI Patch Package (psp)',
     '048EB43E-2059-422F-95E0-557DA96038AF': 'Microsoft Powerpoint.Slide.12',
     '05741520-C4EB-440A-AC3F-9643BBC9F847': 'otkloadr.WRLoader (can be used to bypass ASLR after triggering an exploit)',
     '06290BD2-48AA-11D2-8432-006008C3FBFC': 'Factory bindable using IPersistMoniker (scripletfile)',

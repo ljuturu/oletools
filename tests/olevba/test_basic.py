@@ -4,8 +4,9 @@ Test basic functionality of olevba[3]
 
 import unittest
 import os
-from os.path import join
+from os.path import join, splitext
 import re
+import json
 
 # Directory with test data, independent of current working directory
 from tests.test_utils import DATA_BASE_DIR, call_and_capture
@@ -106,6 +107,67 @@ class TestOlevbaBasic(unittest.TestCase):
                 # test only first file with all arg combinations, others just
                 # without arg (test takes too long otherwise
                 ADD_ARGS = ([], )
+
+    def test_xlm(self):
+        """Test that xlm macros are found."""
+        XLM_DIR = join(DATA_BASE_DIR, 'excel4-macros')
+        ADD_ARGS = ['-j']
+
+        for filename in os.listdir(XLM_DIR):
+            full_name = join(XLM_DIR, filename)
+            suffix = splitext(filename)[1]
+            out_str, ret_code = call_and_capture('olevba',
+                                                 args=[full_name, ] + ADD_ARGS,
+                                                 accept_nonzero_exit=True)
+            output = json.loads(out_str)
+            self.assertGreaterEqual(len(output), 2)
+            self.assertEqual(output[0]['type'], 'MetaInformation')
+            self.assertEqual(output[0]['script_name'], 'olevba')
+            for entry in output[1:]:
+                if entry['type'] in ('msg', 'warning'):
+                    continue    # ignore messages
+                result = entry
+                break
+            self.assertTrue(result['json_conversion_successful'])
+            if suffix in ('.xlsb', '.xltm', '.xlsm'):
+                # TODO: cannot extract xlm macros for these types yet
+                self.assertEqual(result['macros'], [])
+            else:
+                code = result['macros'][0]['code']
+                if suffix == '.slk':
+                    self.assertIn('Excel 4 macros extracted', code)
+                else:
+                    self.assertIn('Excel 4.0 macro sheet', code)
+                self.assertIn('Auto_Open', code)
+                if 'excel5' not in filename:    # TODO: is not found in excel5
+                    self.assertIn('ALERT(', code)
+                self.assertIn('HALT()', code)
+
+                self.assertIn(len(result['analysis']), (2, 3))
+                types = [entry['type'] for entry in result['analysis']]
+                keywords = [entry['keyword'] for entry in result['analysis']]
+                self.assertIn('Auto_Open', keywords)
+                self.assertIn('XLM macro', keywords)
+                self.assertIn('AutoExec', types)
+                self.assertIn('Suspicious', types)
+
+    def test_dir_stream_record_project_compat_version(self):
+        """Test PROJECTCOMPATVERSION record on dir stream with a ppt file."""
+        input_file = join(DATA_BASE_DIR, 'olevba', 'sample_with_vba.ppt')
+        output, ret_code = call_and_capture('olevba', args=(input_file, "--loglevel", "debug"))
+
+        # check return code
+        self.assertEqual(ret_code, 0)
+
+        # not expected string:
+        self.assertNotIn('invalid value for PROJECTLCID_Id expected 0002 got', output)
+        self.assertNotIn('Error in _extract_vba', output)
+
+        # compat version in debug mode:
+        self.assertIn('compat version: 2', output)
+
+        # vba contents:
+        self.assertIn('Sub Action_Click()\n  MsgBox "The action button clicked!"\nEnd Sub', output)
 
 
 # just in case somebody calls this file as a script
