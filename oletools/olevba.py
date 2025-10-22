@@ -2699,6 +2699,7 @@ class VBA_Parser(object):
         self.container = container
         self.relaxed = relaxed
         self.type = None
+        self.version = None #MS Office version
         self.vba_projects = None
         self.vba_forms = None
         self.contains_vba_macros = None # will be set to True or False by detect_vba_macros
@@ -2841,6 +2842,19 @@ class VBA_Parser(object):
                     # found_ole = False
                     # template_injection_detected = False
                     # xml_macrosheet_found = False
+                    try:
+                        # when subfile is 'docProps/app.xml' - read 4096 bytes
+                        # which has <AppVersion>16.0300</AppVersion> - msfile version
+                        if subfile == 'docProps/app.xml':
+                            import xml.etree.ElementTree as ET
+                            appbytes = file_handle.read(1024)
+                            root = ET.fromstring(appbytes.decode())
+                            for child in root:
+                                if 'AppVersion' in child.tag:
+                                    self.version = child.text
+                            file_handle.seek(0)
+                    except Exception as exc:
+                        log.info('Error thrown while reading the version: %s' % (exc))
                     magic = file_handle.read(len(olefile.MAGIC))
                     if magic == olefile.MAGIC:
                 #         found_ole = True
